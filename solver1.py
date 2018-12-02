@@ -128,11 +128,25 @@ def solve(graph, num_buses, bus_size, constraints):
 
     def neighbor(buses, distance):
         for _ in range(distance):
-            b1, b2 = r.sample(range(num_buses), 2)
-            b1, b2 = buses[b1], buses[b2]
-            s1, s2 = b1.pop(r.randint(0, len(b1))-1), b2.pop(r.randint(0, len(b2))-1)
-            b1.append(s2)
-            b2.append(s1)
+            op = r.randint(0, 1)
+            # swap operation
+            if op == 0:
+                b1, b2 = r.sample(range(num_buses), 2)
+                b1, b2 = buses[b1], buses[b2]
+                s1, s2 = b1.pop(r.randint(0, len(b1))-1), b2.pop(r.randint(0, len(b2))-1)
+                b1.append(s2)
+                b2.append(s1)
+            # move operation
+            else:
+                to_add, to_remove = r.sample(range(num_buses), 2)
+                to_add, to_remove = buses[to_add], buses[to_remove]
+                tries = 0
+                while (len(to_add) >= bus_size or len(to_remove) < 2) and tries < 10:
+                    tries += 1
+                    to_add, to_remove = r.sample(range(num_buses), 2)
+                    to_add, to_remove = buses[to_add], buses[to_remove]
+                if tries < 10:
+                    to_add.append(to_remove.pop(r.randint(0, len(to_remove))-1))
         return buses
 
     def anneal(curr, iterations, goal):
@@ -145,7 +159,6 @@ def solve(graph, num_buses, bus_size, constraints):
             n = neighbor(curr[:], 1)
             c_new = cost(n, graph.copy())
             if c_new >= goal:
-                print(c_new)
                 return n, c_new
             elif c_new > c_old:
                 curr = n
@@ -157,7 +170,6 @@ def solve(graph, num_buses, bus_size, constraints):
                 if r.random() < .1:
                     curr = n
                     c_old = c_new
-        print(best_cost)
         return best_sol, best_cost
 
     def cost(buses, graph):
