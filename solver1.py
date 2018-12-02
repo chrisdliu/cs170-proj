@@ -200,7 +200,7 @@ def solve(graph, num_buses, bus_size, constraints):
         score = score / total_edges
         return score
 
-    sol, cost = anneal(solve_random(), 700, 1)
+    sol, cost = anneal(solve_random(), 100, 1)
     print(cost)
     return sol
 
