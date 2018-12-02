@@ -91,10 +91,11 @@ def solve(graph, num_buses, bus_size, constraints):
         buses.append(nodes[:bus_size])
         nodes = nodes[bus_size:]
     num_buses_left = num_buses - len(buses)
-    rest_of_buses = [[] for _ in range(num_buses_left)]
-    for i in range(len(smallest)):
-        rest_of_buses[i % len(rest_of_buses)].append(smallest[i])
-    buses.extend(rest_of_buses)
+    if num_buses_left:
+        rest_of_buses = [[] for _ in range(num_buses_left)]
+        for i in range(len(smallest)):
+            rest_of_buses[i % len(rest_of_buses)].append(smallest[i])
+        buses.extend(rest_of_buses)
     for bus in buses:
         print(bus)
     return buses
