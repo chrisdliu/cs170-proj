@@ -7,14 +7,14 @@ import random
 # the folder containing all three input
 # size category folders
 ###########################################
-path_to_inputs = "./all_inputs"
+path_to_inputs = "./inputs"
 
 ###########################################
 # Change this variable if you want
 # your outputs to be put in a
 # different folder
 ###########################################
-path_to_outputs = "./all_outputs"
+path_to_outputs = "./outputs"
 
 def parse_input(folder_name):
     '''
@@ -230,7 +230,7 @@ def main():
         the portion which writes it to a file to make sure their output is
         formatted correctly.
     '''
-    size_categories = ["medium"]
+    size_categories = ["small"]
     if not os.path.isdir(path_to_outputs):
         os.mkdir(path_to_outputs)
 
