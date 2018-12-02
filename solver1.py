@@ -1,5 +1,6 @@
 import networkx as nx
 import os
+import random as r
 
 ###########################################
 # Change this variable to the path to
@@ -81,7 +82,7 @@ def solve_greedy(graph, num_buses, bus_size, constraints):
         nodes[0]
 
 # sort by degree, put in buses
-def solve(graph, num_buses, bus_size, constraints):
+def solve_bad(graph, num_buses, bus_size, constraints):
     sorted_nodes = sorted(graph.degree(), key=lambda v: -v[1])
     nodes = [pair[0] for pair in sorted_nodes]
     smallest = nodes[-num_buses:]
@@ -100,6 +101,97 @@ def solve(graph, num_buses, bus_size, constraints):
         print(bus)
     return buses
 
+
+
+'''
+First, generate a random solution
+Calculate its cost using some cost function you've defined
+Generate a random neighboring solution
+Calculate the new solution's cost
+Compare them:
+If cnew < cold: move to the new solution
+If cnew > cold: maybe move to the new solution
+Repeat steps 3-5 above until an acceptable solution is found or you reach some maximum number of iterations.
+'''
+def solve(graph, num_buses, bus_size, constraints):
+    def solve_random():
+        buses = [[] for _ in range(num_buses)]
+        nodes = list(graph.nodes())
+        for bus in buses:
+            bus.append(nodes.pop(r.randint(0, len(nodes)-1)))
+        for node in nodes:
+            b = r.randint(0, num_buses - 1)
+            while len(buses[b]) >= bus_size:
+                b = r.randint(0, num_buses - 1)
+            buses[b].append(node)
+        return buses
+
+    def neighbor(buses, distance):
+        for _ in range(distance):
+            b1, b2 = r.sample(range(num_buses), 2)
+            b1, b2 = buses[b1], buses[b2]
+            s1, s2 = b1.pop(r.randint(0, len(b1))-1), b2.pop(r.randint(0, len(b2))-1)
+            b1.append(s2)
+            b2.append(s1)
+        return buses
+
+    def anneal(curr, iterations, goal):
+        if graph.number_of_edges() < 1 or num_buses < 2:
+            return curr, 0
+        best_sol = curr
+        best_cost = cost(curr, graph.copy())
+        for _ in range(iterations):
+            c_old = cost(curr, graph.copy())
+            n = neighbor(curr[:], 1)
+            c_new = cost(n, graph.copy())
+            if c_new >= goal:
+                print(c_new)
+                return n, c_new
+            elif c_new > c_old:
+                curr = n
+                c_old = c_new
+                if c_new > best_cost:
+                    best_sol = curr
+                    best_cost = c_new
+            else:
+                if r.random() < .1:
+                    curr = n
+                    c_old = c_new
+        print(best_cost)
+        return best_sol, best_cost
+
+    def cost(buses, graph):
+        total_edges = graph.number_of_edges()
+        # Create bus assignments
+        bus_assignments = {}
+        for i in range(num_buses):
+            for student in buses[i]:
+                bus_assignments[student] = i
+
+        # Remove nodes for rowdy groups which were not broken up
+        for i in range(len(constraints)):
+            busses = set()
+            for student in constraints[i]:
+                busses.add(bus_assignments[student])
+            if len(busses) <= 1:
+                for student in constraints[i]:
+                    if student in graph:
+                        graph.remove_node(student)
+
+        # score output
+        score = 0
+        for edge in graph.edges():
+            if bus_assignments[edge[0]] == bus_assignments[edge[1]]:
+                score += 1
+        if total_edges == 0:
+            return 0
+        score = score / total_edges
+        return score
+
+    sol, cost = anneal(solve_random(), 700, 1)
+    print(cost)
+    return sol
+
 def main():
     '''
         Main method which iterates over all inputs and calls `solve` on each.
@@ -107,7 +199,7 @@ def main():
         the portion which writes it to a file to make sure their output is
         formatted correctly.
     '''
-    size_categories = ["large"]
+    size_categories = ["small"]
     if not os.path.isdir(path_to_outputs):
         os.mkdir(path_to_outputs)
 
