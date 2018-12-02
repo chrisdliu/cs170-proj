@@ -106,6 +106,6 @@ if __name__ == '__main__':
         score, msg = score_output(input_dir +'/'+ input_folder, output_dir + '/' + input_folder + '.out')
         total += max(score, 0)
         count += 1 if score >= 0 else 0
-        print(score)
+        print(msg)
     print(count)
     print('avg: ' + str(total / count))
