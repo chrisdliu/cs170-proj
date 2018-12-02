@@ -1,6 +1,7 @@
 import networkx as nx
 import os
 import random as r
+import numpy as np
 
 ###########################################
 # Change this variable to the path to
@@ -113,7 +114,7 @@ If cnew < cold: move to the new solution
 If cnew > cold: maybe move to the new solution
 Repeat steps 3-5 above until an acceptable solution is found or you reach some maximum number of iterations.
 '''
-def solve(graph, num_buses, bus_size, constraints):
+def solve_single_anneal(graph, num_buses, bus_size, constraints):
     def solve_random():
         buses = [[] for _ in range(num_buses)]
         nodes = list(graph.nodes())
@@ -200,9 +201,19 @@ def solve(graph, num_buses, bus_size, constraints):
         score = score / total_edges
         return score
 
-    sol, cost = anneal(solve_random(), 100, 1)
+    sol, cost = anneal(solve_random(), 500, 1)
     print(cost)
-    return sol
+    return sol, cost
+
+def solve(graph, num_buses, bus_size, constraints):
+    num_solves = 10
+    sols, costs = [], []
+    for _ in range(num_solves):
+        sol, cost = solve_single_anneal(graph, num_buses, bus_size, constraints)
+        sols.append(sol)
+        costs.append(cost)
+    i = np.argmax(costs)
+    return sols[i]
 
 def main():
     '''
