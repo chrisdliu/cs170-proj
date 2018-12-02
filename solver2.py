@@ -9,14 +9,14 @@ from random import choice
 # the folder containing all three input
 # size category folders
 ###########################################
-path_to_inputs = "./inputs"
+path_to_inputs = "./all_inputs"
 
 ###########################################
 # Change this variable if you want
 # your outputs to be put in a 
 # different folder
 ###########################################
-path_to_outputs = "./outputs"
+path_to_outputs = "./all_outputs"
 
 def parse_input(folder_name):
     '''
@@ -44,31 +44,6 @@ def parse_input(folder_name):
         constraints.append(curr_constraint)
 
     return graph, num_buses, size_bus, constraints
-
-
-def minimum_cut(graph):
-    cutset = set()
-    for subgraph in (graph.subgraph(c) for c in nx.connected_components(graph)):
-        edges = nx.minimum_edge_cut(subgraph)
-        if not edges:
-            continue
-        if not cutset:
-            cutset = edges
-        elif len(edges) < len(cutset):
-            cutset = edges
-    if cutset:
-        return cutset
-    else:
-        raise Exception('no way to make new connected component')
-
-
-def oversized_bus(buses, bus_size):
-    for i in range(len(buses)):
-        if len(bus) > bus_size:
-            return i
-    return -1
-
-
 
 
 
@@ -111,7 +86,7 @@ def solve(graph, num_buses, bus_size, constraints):
                 if neighbor in cluster:
                     cgraph.add_edge(node, neighbor)
 
-        while fringe and len(cluster) <= max_bus_size:
+        while fringe and len(cluster) < max_bus_size:
             degrees = cgraph.degree()
             candidates = sorted(fringe, key=lambda node: -(degrees[node] + clustering[node]))
             index = -1
@@ -141,7 +116,7 @@ def solve(graph, num_buses, bus_size, constraints):
 
 
     clusters = sorted(clusters, key=lambda c: -len(c))
-    print(clusters)
+    #print(clusters)
     buses = []
 
     if len(clusters) < num_buses:
@@ -197,7 +172,7 @@ def main():
         the portion which writes it to a file to make sure their output is
         formatted correctly.
     '''
-    size_categories = ["small", "medium", "large"]
+    size_categories = ["medium"]
     if not os.path.isdir(path_to_outputs):
         os.mkdir(path_to_outputs)
 
