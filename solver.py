@@ -3,18 +3,18 @@ import os
 import random
 
 ###########################################
-# Change this variable to the path to 
+# Change this variable to the path to
 # the folder containing all three input
 # size category folders
 ###########################################
-path_to_inputs = "./inputs"
+path_to_inputs = "./all_inputs"
 
 ###########################################
 # Change this variable if you want
-# your outputs to be put in a 
+# your outputs to be put in a
 # different folder
 ###########################################
-path_to_outputs = "./outputs"
+path_to_outputs = "./all_outputs"
 
 def parse_input(folder_name):
     '''
@@ -35,7 +35,7 @@ def parse_input(folder_name):
     num_buses = int(parameters.readline())
     size_bus = int(parameters.readline())
     constraints = []
-    
+
     for line in parameters:
         line = line[1: -2]
         curr_constraint = [num.replace("'", "") for num in line.split(", ")]
@@ -80,9 +80,11 @@ def score_bus(graph, bus, constraints):
 
     score = 0
     for kid in sorted(bus.difference(invalid)):
-        for neighbor in graph.neighbors(kid):
-            if neighbor in bus and neighbor not in invalid and neighbor > kid:
-                score += 1
+        #hi chris i added this if
+        if kid in graph:
+            for neighbor in graph.neighbors(kid):
+                if neighbor in bus and neighbor not in invalid and neighbor > kid:
+                    score += 1
     return score
 
 def solve(graph, num_buses, bus_size, constraints):
@@ -124,7 +126,8 @@ def solve(graph, num_buses, bus_size, constraints):
             buses.append(group)
         else:
             for bus in buses:
-                if len(group) + sum(len(bus)) <= bus_size:
+                # chris i changed sum(len(bus)) to len(bus)
+                if len(group) + len(bus) <= bus_size:
                     bus.update(group)
                     break
 
@@ -153,7 +156,7 @@ def solve(graph, num_buses, bus_size, constraints):
                 for neighbor in graph.neighbors(kid):
                     if neighbor in buses[oversized] and neighbor != removed_kid and neighbor > kid:
                         bonus += 1
-            
+
             best_bus = None
             best_malus = 999999999
             for num, bus in enumerate(buses):
@@ -204,7 +207,7 @@ def solve(graph, num_buses, bus_size, constraints):
         oversized = get_oversized_bus(buses, bus_size)
 
     print(buses)
-    
+
 
 
     '''
@@ -216,7 +219,7 @@ def solve(graph, num_buses, bus_size, constraints):
     oversized = get_oversized_component(copy, bus_size)
     while oversized:
     '''
-    
+
     return [[kid for kid in bus] for bus in buses]
 
 
@@ -227,7 +230,7 @@ def main():
         the portion which writes it to a file to make sure their output is
         formatted correctly.
     '''
-    size_categories = ["small", "medium", "large"]
+    size_categories = ["medium"]
     if not os.path.isdir(path_to_outputs):
         os.mkdir(path_to_outputs)
 
@@ -235,12 +238,12 @@ def main():
         category_path = path_to_inputs + "/" + size
         output_category_path = path_to_outputs + "/" + size
         category_dir = os.fsencode(category_path)
-        
+
         if not os.path.isdir(output_category_path):
             os.mkdir(output_category_path)
 
         for input_folder in os.listdir(category_dir):
-            input_name = os.fsdecode(input_folder) 
+            input_name = os.fsdecode(input_folder)
             graph, num_buses, size_bus, constraints = parse_input(category_path + "/" + input_name)
             solution = solve(graph, num_buses, size_bus, constraints)
             output_file = open(output_category_path + "/" + input_name + ".out", "w")
@@ -252,5 +255,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
