@@ -78,16 +78,16 @@ def solve(graph, num_buses, bus_size, constraints):
         cluster = set([start])
         fringe = set(copy.neighbors(start))
 
-        cgraph = nx.Graph()
-        cgraph.add_node(start)
+        fgraph = nx.Graph()
+        fgraph.add_node(start)
         for node in fringe:
-            cgraph.add_node(node)
+            fgraph.add_node(node)
             for neighbor in copy.neighbors(node):
                 if neighbor in cluster:
-                    cgraph.add_edge(node, neighbor)
+                    fgraph.add_edge(node, neighbor)
 
         while fringe and len(cluster) < max_bus_size:
-            degrees = cgraph.degree()
+            degrees = fgraph.degree()
             candidates = sorted(fringe, key=lambda node: -(degrees[node] + clustering[node]))
             index = -1
             for i in range(len(candidates)):
@@ -103,12 +103,56 @@ def solve(graph, num_buses, bus_size, constraints):
             cluster.add(candidate)
             for neighbor in copy.neighbors(candidate):
                 if neighbor in fringe:
-                    cgraph.add_edge(candidate, neighbor)
+                    fgraph.add_edge(candidate, neighbor)
                 elif neighbor not in cluster:
-                    cgraph.add_node(neighbor)
+                    fringe.add(neighbor)
+                    fgraph.add_node(neighbor)
                     for neighbor_neighbor in copy.neighbors(neighbor):
                         if neighbor_neighbor in cluster:
-                            cgraph.add_edge(neighbor, neighbor_neighbor)
+                            fgraph.add_edge(neighbor, neighbor_neighbor)
+
+        cgraph = nx.Graph()
+        for node in cluster:
+            cgraph.add_node(node)
+            for neighbor in copy.neighbors(node):
+                if neighbor in cluster:
+                    cgraph.add_edge(node, neighbor)
+        while False:
+            cdegrees = cgraph.degree()
+            loneliest = min(cluster, key=lambda node: cdegrees[node])
+            fcopy = fgraph.copy()
+            fcopy.remove_node(loneliest)
+            fdegrees = fcopy.degree()
+            friendly_list = sorted(fringe, key=lambda node: -fdegrees[node])
+            friendliest = None
+            difference = cluster.difference(set([loneliest]))
+            for node in friendly_list:
+                if fdegrees[node] <= cdegrees[loneliest]:
+                    break
+                if fdegrees[node] > cdegrees[loneliest] and not isrowdy(difference.union(set([node]))):
+                    friendliest = node
+                    break
+            if not friendliest:
+                break
+            cgraph.remove_node(loneliest)
+            fgraph.add_node(loneliest)
+            fgraph.remove_node(friendliest)
+            cgraph.add_node(friendliest)
+            cluster.remove(loneliest)
+            fringe.add(loneliest)
+            fringe.remove(friendliest)
+            cluster.add(friendliest)
+            for neighbor in copy.neighbors(loneliest):
+                if neighbor in fringe:
+                    fgraph.add_edge(loneliest, neighbor)
+                elif neighbor not in cluster:
+                    fgraph.add_node(neighbor)
+                    for neighbor_neighbor in copy.neighbors(neighbor):
+                        if neighbor_neighbor in cluster:
+                            fgraph.add_edge(neighbor, neighbor_neighbor)
+            for neighbor in copy.neighbors(friendliest):
+                if neighbor in cluster:
+                    cgraph.add_edge(friendliest, neighbor)
 
         clusters.append(cluster)
         copy.remove_nodes_from(cluster)
@@ -132,9 +176,10 @@ def solve(graph, num_buses, bus_size, constraints):
         for cluster in clusters:
             buses.append(cluster)
     elif len(clusters) > num_buses:
-        for i in range(num_buses):
+        for i in range(num_buses - 1):
             buses.append(clusters[i])
-        for i in range(num_buses, len(clusters)):
+        buses.append(set())
+        for i in range(num_buses - 1, len(clusters)):
             added = False
             for j in range(num_buses):
                 if len(buses[j]) + len(clusters[i]) <= bus_size and not isrowdy(buses[j].union(clusters[i])):
@@ -153,6 +198,15 @@ def solve(graph, num_buses, bus_size, constraints):
             for j in range(num_buses - 1, -1, -1):
                 while clusters[i] and len(buses[j]) < bus_size:
                     buses[j].add(clusters[i].pop())
+        if not len(buses[-1]):
+            source = 0
+            while source + 1 < len(buses) and len(buses[source + 1]) > 1:
+                source += 1
+            subgraph = graph.subgraph(buses[source])
+            degrees = subgraph.degree()
+            loneliest = min([node for node in buses[source]], key=lambda node: degrees[node])
+            buses[source].remove(loneliest)
+            buses[-1].add(loneliest)
     else:
         for i in range(num_buses):
             buses.append(clusters[i])
@@ -172,7 +226,7 @@ def main():
         the portion which writes it to a file to make sure their output is
         formatted correctly.
     '''
-    size_categories = ["small"]
+    size_categories = ["medium"]
     if not os.path.isdir(path_to_outputs):
         os.mkdir(path_to_outputs)
 
