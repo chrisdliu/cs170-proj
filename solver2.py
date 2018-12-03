@@ -5,7 +5,7 @@ import random
 from random import choice
 
 ###########################################
-# Change this variable to the path to 
+# Change this variable to the path to
 # the folder containing all three input
 # size category folders
 ###########################################
@@ -13,7 +13,7 @@ path_to_inputs = "./all_inputs"
 
 ###########################################
 # Change this variable if you want
-# your outputs to be put in a 
+# your outputs to be put in a
 # different folder
 ###########################################
 path_to_outputs = "./all_outputs"
@@ -37,7 +37,7 @@ def parse_input(folder_name):
     num_buses = int(parameters.readline())
     size_bus = int(parameters.readline())
     constraints = []
-    
+
     for line in parameters:
         line = line[1: -2]
         curr_constraint = [num.replace("'", "") for num in line.split(", ")]
@@ -65,7 +65,7 @@ def solve(graph, num_buses, bus_size, constraints):
                 return constraint
         return None
 
-    
+
     clusters = []
     copy = graph.copy()
 
@@ -234,12 +234,12 @@ def main():
         category_path = path_to_inputs + "/" + size
         output_category_path = path_to_outputs + "/" + size
         category_dir = os.fsencode(category_path)
-        
+
         if not os.path.isdir(output_category_path):
             os.mkdir(output_category_path)
 
         for input_folder in os.listdir(category_dir):
-            input_name = os.fsdecode(input_folder) 
+            input_name = os.fsdecode(input_folder)
             graph, num_buses, size_bus, constraints = parse_input(category_path + "/" + input_name)
             print('solving', size, input_name)
             solution = solve(graph, num_buses, size_bus, constraints)
@@ -252,5 +252,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
