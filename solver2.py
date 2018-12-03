@@ -52,6 +52,8 @@ def solve(graph, num_buses, bus_size, constraints):
 
     print('start solve')
 
+    graph.remove_edges_from(graph.selfloop_edges())
+
     num_kids = len(graph.nodes())
     max_bus_size = min(bus_size, num_kids - num_buses + 1)
 
@@ -71,7 +73,9 @@ def solve(graph, num_buses, bus_size, constraints):
 
     while copy.nodes():
         clustering = nx.clustering(copy)
-        start = max([entry for entry in clustering.items()], key=lambda e: e[1])[0]
+        degrees = copy.degree()
+        start = max([(entry[0], entry[1] + degrees[entry[0]]) for entry in clustering.items()], key=lambda e: e[1])[0]
+        #start = choice(list(copy.nodes()))
 
         print('\tinitial node: ' + start, end='')
 
@@ -117,7 +121,7 @@ def solve(graph, num_buses, bus_size, constraints):
             for neighbor in copy.neighbors(node):
                 if neighbor in cluster:
                     cgraph.add_edge(node, neighbor)
-        while False:
+        while fringe:
             cdegrees = cgraph.degree()
             loneliest = min(cluster, key=lambda node: cdegrees[node])
             fcopy = fgraph.copy()
@@ -135,24 +139,31 @@ def solve(graph, num_buses, bus_size, constraints):
             if not friendliest:
                 break
             cgraph.remove_node(loneliest)
-            fgraph.add_node(loneliest)
-            fgraph.remove_node(friendliest)
             cgraph.add_node(friendliest)
             cluster.remove(loneliest)
-            fringe.add(loneliest)
-            fringe.remove(friendliest)
             cluster.add(friendliest)
+            fringe.remove(friendliest)
+            fringe.add(loneliest)
             for neighbor in copy.neighbors(loneliest):
-                if neighbor in fringe:
+                if neighbor in cluster:
                     fgraph.add_edge(loneliest, neighbor)
-                elif neighbor not in cluster:
-                    fgraph.add_node(neighbor)
-                    for neighbor_neighbor in copy.neighbors(neighbor):
-                        if neighbor_neighbor in cluster:
-                            fgraph.add_edge(neighbor, neighbor_neighbor)
+                elif neighbor in fringe:
+                    fgraph.remove_edge(loneliest, neighbor)
+                    if not next(fgraph.neighbors(neighbor), None):
+                        fgraph.remove_node(neighbor)
+                        fringe.remove(neighbor)
             for neighbor in copy.neighbors(friendliest):
                 if neighbor in cluster:
                     cgraph.add_edge(friendliest, neighbor)
+                    fgraph.remove_edge(friendliest, neighbor)
+                elif neighbor in fringe:
+                    fgraph.add_edge(friendliest, neighbor)
+                else:
+                    fgraph.add_node(neighbor)
+                    fringe.add(neighbor)
+                    for neighbor_neighbor in copy.neighbors(neighbor):
+                        if neighbor_neighbor in cluster:
+                            fgraph.add_edge(neighbor, neighbor_neighbor)
 
         clusters.append(cluster)
         copy.remove_nodes_from(cluster)
@@ -226,7 +237,7 @@ def main():
         the portion which writes it to a file to make sure their output is
         formatted correctly.
     '''
-    size_categories = ["medium"]
+    size_categories = ["small"]
     if not os.path.isdir(path_to_outputs):
         os.mkdir(path_to_outputs)
 
